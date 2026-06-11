@@ -28,4 +28,4 @@ We follow a **structured, documentation-first** approach to development:
 ## Context for AI Agents
 - **Base Knowledge**: Refer to the `requirements/` folder for original requirements.
 - **Decisions**: Refer to `plan/choices.md` for current technical stack and architectural decisions.
-- **State**: Check the issue tracker (simulated or actual) to understand current progress.
+- **State**: Check the **GitHub Issues and Milestones** for the current progress. This is the single source of truth for the project's roadmap and task status.
