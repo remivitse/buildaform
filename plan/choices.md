@@ -22,4 +22,5 @@ This document outlines the technical decisions made for the BuildAForm project.
 ## Workflow
 - **Task Management**: GitHub-issues-based workflow.
 - **Branching Model**: Gitflow.
+- **Default Branch**: `develop` (until v1.0.0 is released, for a faster early workflow).
 - **Prioritization**: Strictly following the order and requirements defined in the `requirements/` folder.
