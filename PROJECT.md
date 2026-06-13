@@ -18,6 +18,10 @@ We follow a **structured, documentation-first** approach to development:
 4.  **Standardized Workflow**:
     - Use **Gitflow** for managing branches (main, develop, feature branches).
     - Use a **GitHub-issues-based workflow** to track tasks and progress.
+    - **Branch Naming**: Feature branches MUST be named `feature/<feature-name>` (e.g., `feature/gitflow-setup`). Do NOT include issue numbers in branch names.
+    - **Pull Requests**: When a task is completed, create a Pull Request from the feature branch to `develop`.
+    - **Conventional Comments**: Follow the [Conventional Comments](https://conventionalcomments.org/) guidelines for any comments made on PRs (including self-reviews).
+    - **Merging Policy**: AI agents MUST NEVER merge into the `develop` or `main` branches. They should push their feature branches and let the human review and merge them.
 
 ## Technical Philosophy
 - **Modern Stack**: Leveraging Next.js App Router and Server Actions.
