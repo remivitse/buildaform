@@ -22,10 +22,8 @@ This document outlines the technical decisions made for the BuildAForm project.
 ## Workflow
 - **Task Management**: GitHub-issues-based workflow.
 - **Branching Model**: Gitflow.
-<<<<<<< Updated upstream
 - **Default Branch**: `develop` (until v1.0.0 is released, for a faster early workflow).
 - **Prioritization**: Strictly following the order and requirements defined in the `requirements/` folder.
-=======
 - **Releases**: We use Semantic Release to automate versioning and GitHub Releases.
   - `main` triggers stable releases.
   - `develop` triggers `beta` pre-releases.
@@ -42,4 +40,3 @@ This document outlines the technical decisions made for the BuildAForm project.
 ## GitHub Issues
 Issues should follow one of the available templates:
 - `feature_request.md` for new features.
->>>>>>> Stashed changes
