@@ -10,27 +10,18 @@ We follow a **structured, documentation-first** approach to development:
 
 1.  **Exhaustive Planning**: No code is written without a clear plan.
 2.  **Sequential Implementation**: Tasks are tackled in the order defined by the project specifications (Requirement PDFs):
-    - Part 1: Form Builder (Admin interface)
-    - Part 2: Form Responder (Public interface)
-    - Part 3: Response Viewer (Analytics dashboard)
-    - Part 4: AI Prompt Generation
 3.  **Minimalist Start**: Focus on mandatory features first. Optional features like Authentication are deferred until the core logic is solid.
 4.  **Standardized Workflow**:
     - Use **Gitflow** for managing branches (main, develop, feature branches).
     - Use a **GitHub-issues-based workflow** to track tasks and progress.
-    - **Branch Naming**: Feature branches MUST be named `feature/<feature-name>` (e.g., `feature/gitflow-setup`). Do NOT include issue numbers in branch names.
-    - **Pull Requests**: When a task is completed, create a Pull Request from the feature branch to `develop`.
-    - **Conventional Comments**: Follow the [Conventional Comments](https://conventionalcomments.org/) guidelines for any comments made on PRs (including self-reviews).
-    - **Merging Policy**: AI agents MUST NEVER merge into the `develop` or `main` branches. They should push their feature branches and let the human review and merge them.
-    - **Releases**: We use **Semantic Release** to automate versioning and GitHub Releases. It follows [Conventional Commits](https://www.conventionalcommits.org/) to determine version bumps.
-
-## Technical Philosophy
-- **Modern Stack**: Leveraging Next.js App Router and Server Actions.
-- **Strict Typing**: TypeScript is used across the entire stack for reliability and maintainability.
-- **UI Excellence**: Using Shadcn UI for a professional, accessible, and easily customizable interface.
-- **Local AI**: Utilizing Ollama for local development of AI features, maintaining compatibility with OpenAI-style APIs.
+    - **Branches**:
+      - Do NOT include issue numbers in branch names.
+      - AI agents MUST NEVER merge into or rebase `develop` or `main` branches.
+    - **Pushing Policy**: AI agents MUST NEVER push to the remote repository. They can commit locally, but the actual push must be performed by a human.
+    - **Authorship Policy**: AI agents MUST NOT sign their names as co-authors or contributors in commits, Pull Requests, or documentation. All work is the responsibility of a human, and AI agents must remain anonymous in the repository history.
+    - **Pull Requests**: AI agents can create Pull Requests only for branches that have already been pushed to the remote by a human.
 
 ## Context for AI Agents
 - **Base Knowledge**: Refer to the `requirements/` folder for original requirements.
-- **Decisions**: Refer to `plan/choices.md` for current technical stack and architectural decisions.
+- **Technical Choices**: ALL technical decisions (stack, architecture, etc.) are documented in `plan/choices.md`. AI agents MUST review this file before starting any work.
 - **State**: Check the **GitHub Issues and Milestones** for the current progress. This is the single source of truth for the project's roadmap and task status.

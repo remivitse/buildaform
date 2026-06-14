@@ -17,17 +17,11 @@ This document outlines the technical decisions made for the BuildAForm project.
 ## AI Integration
 - **Engine**: Ollama (Local model setup).
 - **API Compatibility**: Target OpenAI-compatible APIs to ensure future flexibility.
-- **Feature**: Form generation based on text prompts.
+- **Feature**: Form generation based on text prompts (aiming for structured JSON output that matches the database schema).
 
-## Workflow
-- **Task Management**: GitHub-issues-based workflow.
+## Development Workflow
+- **Feature planning**: GitHub Issues and Milestones.
 - **Branching Model**: Gitflow.
-- **Default Branch**: `develop` (until v1.0.0 is released, for a faster early workflow).
-- **Prioritization**: Strictly following the order and requirements defined in the `requirements/` folder.
-- **Releases**: We use Semantic Release to automate versioning and GitHub Releases.
-  - `main` triggers stable releases.
-  - `develop` triggers `beta` pre-releases.
-  - `release/*` triggers `rc` (release candidate) pre-releases.
 - **Default Branch**: `develop` until v1.0.0 is released, `main` from then on.
 - **Branch Naming**:
   - Feature branches should be named `feature/<feature-name>` (e.g., `feature/gitflow-setup`). 
@@ -36,6 +30,11 @@ This document outlines the technical decisions made for the BuildAForm project.
   - We create `release/*` branches from `develop` when ready for a release.
   - Fixes can be applied directly to `release/*` branches and then backported to `develop`.
   - Once stable, `main` is **rebased** onto the `release/*` branch. `develop` is then rebased onto the `main` branch.
+- **Versioning**: We use Semantic Release to automate versioning and GitHub Releases.
+    - `main` triggers stable releases.
+    - `develop` triggers `beta` pre-releases.
+    - `release/*` triggers `rc` (release candidate) pre-releases.
+  This also means we use Semantic Versioning (SemVer).
 
 ## GitHub Issues
 Issues should follow one of the available templates:
