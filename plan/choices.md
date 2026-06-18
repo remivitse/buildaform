@@ -7,6 +7,7 @@ This document outlines the technical decisions made for the BuildAForm project.
 - **Framework**: Next.js (App Router) - Latest stable version.
 - **Styling**: Tailwind CSS v4.
 - **Components**: Shadcn UI (Radix UI primitives, Luma visual preset). Preset code: `b6V64uxTj0`.
+    - **Primary color**: Indigo/blue (`oklch ~277` hue) — the preset's default lime (~hue 130) was replaced because lime fails legibility on both light and dark backgrounds, particularly for primary buttons and sidebar highlights. See issue #42.
     - **Icons**: Hugeicons (`@hugeicons/react`).
     - **Fonts**: Manrope (body), Space Grotesk (headings) via `next/font/google`.
 - **Validation**: Zod (standard for TypeScript schema validation).
