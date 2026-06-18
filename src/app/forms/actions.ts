@@ -1,10 +1,11 @@
 "use server";
 
 import { z } from "zod";
-import { QuestionType } from "@prisma/client";
+import type { QuestionType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { createFormSchema } from "@/lib/validations/form";
 import { saveQuestionsSchema, type QuestionDraft } from "@/lib/validations/question";
+import { isChoiceType } from "@/lib/question-types";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -58,12 +59,22 @@ export async function deleteForm(formId: string) {
 export type SavedQuestion = {
   id: string;
   title: string;
+  type: QuestionType;
+  options: { id: string; label: string }[];
+};
+
+// Validation errors for a single question, split by the field they belong to so
+// the UI can highlight the offending control rather than always the title.
+export type QuestionErrors = {
+  title?: string;
+  options?: string;
+  optionLabels?: Record<number, string>;
 };
 
 export type SaveFormQuestionsState = {
   questions?: SavedQuestion[];
-  // Validation errors keyed by the question's index in the submitted draft.
-  errors?: Record<number, string[]>;
+  // Keyed by the question's index in the submitted draft.
+  errors?: Record<number, QuestionErrors>;
   message?: string;
   savedAt?: number;
 };
@@ -75,11 +86,20 @@ export async function saveFormQuestions(
   const parsed = saveQuestionsSchema.safeParse(draft);
 
   if (!parsed.success) {
-    const errors: Record<number, string[]> = {};
+    const errors: Record<number, QuestionErrors> = {};
     for (const issue of parsed.error.issues) {
-      const index = issue.path[0];
-      if (typeof index === "number") {
-        (errors[index] ??= []).push(issue.message);
+      const [questionIndex, field, optionIndex, optionField] = issue.path;
+      if (typeof questionIndex !== "number") continue;
+      const entry = (errors[questionIndex] ??= {});
+
+      if (field === "title") {
+        entry.title ??= issue.message;
+      } else if (field === "options") {
+        if (typeof optionIndex === "number" && optionField === "label") {
+          (entry.optionLabels ??= {})[optionIndex] ??= issue.message;
+        } else {
+          entry.options ??= issue.message;
+        }
       }
     }
     return {
@@ -94,9 +114,12 @@ export async function saveFormQuestions(
     const saved = await prisma.$transaction(async (tx) => {
       const existing = await tx.question.findMany({
         where: { formId },
-        select: { id: true },
+        select: { id: true, options: { select: { id: true } } },
       });
       const existingIds = new Set(existing.map((q) => q.id));
+      const existingOptionIds = new Map(
+        existing.map((q) => [q.id, new Set(q.options.map((o) => o.id))]),
+      );
       const keptIds = new Set(
         questions
           .map((q) => q.id)
@@ -109,30 +132,71 @@ export async function saveFormQuestions(
         await tx.question.deleteMany({ where: { id: { in: removedIds } } });
       }
 
-      // Persist in submitted order; `order` is derived from array position.
+      // Persist in submitted order; `order` is derived from array position for
+      // both questions and their options. Only choice types keep options.
       for (const [index, question] of questions.entries()) {
+        const options = isChoiceType(question.type) ? question.options : [];
+
+        let questionId: string;
         if (question.id && existingIds.has(question.id)) {
           await tx.question.update({
             where: { id: question.id },
-            // Preserve type/required (edited in later issues); only title/order here.
-            data: { title: question.title, order: index },
+            data: { title: question.title, type: question.type, order: index },
           });
+          questionId = question.id;
+
+          // Sync this question's options against what's already stored.
+          const priorOptionIds = existingOptionIds.get(question.id) ?? new Set();
+          const keptOptionIds = new Set(
+            options
+              .map((o) => o.id)
+              .filter((id): id is string => !!id && priorOptionIds.has(id)),
+          );
+          const removedOptionIds = [...priorOptionIds].filter(
+            (id) => !keptOptionIds.has(id),
+          );
+          if (removedOptionIds.length > 0) {
+            await tx.option.deleteMany({
+              where: { id: { in: removedOptionIds } },
+            });
+          }
         } else {
-          await tx.question.create({
-            data: {
-              formId,
-              title: question.title,
-              order: index,
-              type: QuestionType.SHORT_TEXT,
-            },
+          const created = await tx.question.create({
+            data: { formId, title: question.title, type: question.type, order: index },
+            select: { id: true },
           });
+          questionId = created.id;
+        }
+
+        for (const [optionIndex, option] of options.entries()) {
+          if (
+            option.id &&
+            existingOptionIds.get(questionId)?.has(option.id)
+          ) {
+            await tx.option.update({
+              where: { id: option.id },
+              data: { label: option.label, order: optionIndex },
+            });
+          } else {
+            await tx.option.create({
+              data: { questionId, label: option.label, order: optionIndex },
+            });
+          }
         }
       }
 
       return tx.question.findMany({
         where: { formId },
         orderBy: { order: "asc" },
-        select: { id: true, title: true },
+        select: {
+          id: true,
+          title: true,
+          type: true,
+          options: {
+            orderBy: { order: "asc" },
+            select: { id: true, label: true },
+          },
+        },
       });
     });
 
