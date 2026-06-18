@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { listForms } from "@/lib/data/forms";
 import { FormCard } from "@/components/forms/form-card";
 import { CreateFormDialog } from "@/components/forms/create-form-dialog";
 import {
@@ -9,15 +9,7 @@ import {
 } from "@/components/ui/empty";
 
 export default async function FormsPage() {
-  const forms = await prisma.form.findMany({
-    orderBy: { createdAt: "desc" },
-    select: {
-      id: true,
-      title: true,
-      description: true,
-      _count: { select: { questions: true } },
-    },
-  });
+  const forms = await listForms();
 
   return (
     <main className="mx-auto container p-8">
