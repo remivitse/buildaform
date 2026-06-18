@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { FormCard } from "@/components/forms/form-card";
-import { CreateFormButton } from "@/components/forms/create-form-button";
+import { CreateFormDialog } from "@/components/forms/create-form-dialog";
 import {
   Empty,
   EmptyHeader,
@@ -23,7 +23,7 @@ export default async function FormsPage() {
     <main className="mx-auto container p-8">
       <div className="mb-8 flex flex-wrap gap-4 items-center justify-between">
         <h1 className="font-heading text-3xl font-bold">My Forms</h1>
-        <CreateFormButton />
+        <CreateFormDialog />
       </div>
 
       {forms.length === 0 ? (
