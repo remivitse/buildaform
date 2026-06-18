@@ -4,8 +4,10 @@ This document outlines the technical decisions made for the BuildAForm project.
 
 ## Frontend & UI
 - **Framework**: Next.js (App Router) - Latest stable version.
-- **Styling**: Tailwind CSS.
-- **Components**: Shadcn UI (chosen for its extensibility and clean default look).
+- **Styling**: Tailwind CSS v4.
+- **Components**: Shadcn UI (Radix UI primitives, Luma visual preset). Preset code: `b6V64uxTj0`.
+  - **Icons**: Hugeicons (`@hugeicons/react`).
+  - **Fonts**: Manrope (body), Space Grotesk (headings) via `next/font/google`.
 - **Validation**: Zod (standard for TypeScript schema validation).
 
 ## Backend & Data
