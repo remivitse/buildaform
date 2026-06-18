@@ -15,6 +15,12 @@ This document outlines the technical decisions made for the BuildAForm project.
 ## Backend & Data
 
 - **Language**: TypeScript (End-to-end).
+- **Layering**: We separate responsibilities into three layers so logic stays testable and the
+  Server-Action files don't accumulate database code as the app grows. Prisma queries live in a
+  **data-access layer** (`src/lib/data/*.ts`, e.g. `forms.ts`); **Server Actions**
+  (`src/app/**/actions.ts`) handle input validation, call the data layer, and trigger
+  `revalidatePath`/`redirect`; **route components** render and read through the data layer. The
+  data modules are server-only by usage and must never be imported from client components.
 - **ORM**: Prisma 6 (pinned). We deliberately stay on the v6 line for a simpler setup and richer support.
 - **Database**: Supabase Cloud (managed PostgreSQL). We chose the hosted offering over a self-hosted instance for a
   simpler setup — no infrastructure to run locally. Prisma connects via two URLs: the Supavisor **pooled** connection (

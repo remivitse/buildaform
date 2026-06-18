@@ -1,13 +1,15 @@
 "use server";
 
 import { z } from "zod";
-import type { QuestionType } from "@prisma/client";
-import { prisma } from "@/lib/prisma";
 import { createFormSchema } from "@/lib/validations/form";
-import { saveQuestionsSchema, type QuestionDraft } from "@/lib/validations/question";
-import { isChoiceType } from "@/lib/question-types";
+import { saveQuestionsSchema } from "@/lib/validations/question";
+import * as formsData from "@/lib/data/forms";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+
+// Re-exported for client components (e.g. FormEditor) that type their props
+// against the persisted question shape.
+export type { SavedQuestion } from "@/lib/data/forms";
 
 export type CreateFormState = {
   errors?: {
@@ -32,12 +34,9 @@ export async function createForm(
 
   let formId: string;
   try {
-    const form = await prisma.form.create({
-      data: {
-        title: parsed.data.title,
-        description: parsed.data.description || null,
-      },
-      select: { id: true },
+    const form = await formsData.createForm({
+      title: parsed.data.title,
+      description: parsed.data.description || null,
     });
     formId = form.id;
   } catch {
@@ -51,17 +50,10 @@ export async function createForm(
 }
 
 export async function deleteForm(formId: string) {
-  await prisma.form.delete({ where: { id: formId } });
+  await formsData.deleteForm(formId);
   revalidatePath("/forms");
   redirect("/forms");
 }
-
-export type SavedQuestion = {
-  id: string;
-  title: string;
-  type: QuestionType;
-  options: { id: string; label: string }[];
-};
 
 // Validation errors for a single question, split by the field they belong to so
 // the UI can highlight the offending control rather than always the title.
@@ -72,7 +64,7 @@ export type QuestionErrors = {
 };
 
 export type SaveFormQuestionsState = {
-  questions?: SavedQuestion[];
+  questions?: formsData.SavedQuestion[];
   // Keyed by the question's index in the submitted draft.
   errors?: Record<number, QuestionErrors>;
   message?: string;
@@ -81,7 +73,7 @@ export type SaveFormQuestionsState = {
 
 export async function saveFormQuestions(
   formId: string,
-  draft: QuestionDraft[],
+  draft: formsData.SavedQuestion[],
 ): Promise<SaveFormQuestionsState> {
   const parsed = saveQuestionsSchema.safeParse(draft);
 
@@ -108,102 +100,11 @@ export async function saveFormQuestions(
     };
   }
 
-  const questions = parsed.data;
-
   try {
-    const saved = await prisma.$transaction(async (tx) => {
-      const existing = await tx.question.findMany({
-        where: { formId },
-        select: { id: true, options: { select: { id: true } } },
-      });
-      const existingIds = new Set(existing.map((q) => q.id));
-      const existingOptionIds = new Map(
-        existing.map((q) => [q.id, new Set(q.options.map((o) => o.id))]),
-      );
-      const keptIds = new Set(
-        questions
-          .map((q) => q.id)
-          .filter((id): id is string => !!id && existingIds.has(id)),
-      );
-
-      const removedIds = [...existingIds].filter((id) => !keptIds.has(id));
-      if (removedIds.length > 0) {
-        // Options cascade-delete with their question.
-        await tx.question.deleteMany({ where: { id: { in: removedIds } } });
-      }
-
-      // Persist in submitted order; `order` is derived from array position for
-      // both questions and their options. Only choice types keep options.
-      for (const [index, question] of questions.entries()) {
-        const options = isChoiceType(question.type) ? question.options : [];
-
-        let questionId: string;
-        if (question.id && existingIds.has(question.id)) {
-          await tx.question.update({
-            where: { id: question.id },
-            data: { title: question.title, type: question.type, order: index },
-          });
-          questionId = question.id;
-
-          // Sync this question's options against what's already stored.
-          const priorOptionIds = existingOptionIds.get(question.id) ?? new Set();
-          const keptOptionIds = new Set(
-            options
-              .map((o) => o.id)
-              .filter((id): id is string => !!id && priorOptionIds.has(id)),
-          );
-          const removedOptionIds = [...priorOptionIds].filter(
-            (id) => !keptOptionIds.has(id),
-          );
-          if (removedOptionIds.length > 0) {
-            await tx.option.deleteMany({
-              where: { id: { in: removedOptionIds } },
-            });
-          }
-        } else {
-          const created = await tx.question.create({
-            data: { formId, title: question.title, type: question.type, order: index },
-            select: { id: true },
-          });
-          questionId = created.id;
-        }
-
-        for (const [optionIndex, option] of options.entries()) {
-          if (
-            option.id &&
-            existingOptionIds.get(questionId)?.has(option.id)
-          ) {
-            await tx.option.update({
-              where: { id: option.id },
-              data: { label: option.label, order: optionIndex },
-            });
-          } else {
-            await tx.option.create({
-              data: { questionId, label: option.label, order: optionIndex },
-            });
-          }
-        }
-      }
-
-      return tx.question.findMany({
-        where: { formId },
-        orderBy: { order: "asc" },
-        select: {
-          id: true,
-          title: true,
-          type: true,
-          options: {
-            orderBy: { order: "asc" },
-            select: { id: true, label: true },
-          },
-        },
-      });
-    });
-
+    const questions = await formsData.saveFormQuestions(formId, parsed.data);
     revalidatePath("/forms");
     revalidatePath(`/forms/${formId}`);
-
-    return { questions: saved, savedAt: Date.now() };
+    return { questions, savedAt: Date.now() };
   } catch {
     return {
       message: "Something went wrong while saving. Please try again.",

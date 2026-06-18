@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
+import { getFormForEditor } from "@/lib/data/forms";
 import { Button } from "@/components/ui/button";
 import { deleteForm } from "@/app/forms/actions";
 import { FormEditor } from "@/components/forms/form-editor";
@@ -12,26 +12,7 @@ type Props = {
 export default async function FormEditPage({ params }: Props) {
   const { id } = await params;
 
-  const form = await prisma.form.findUnique({
-    where: { id },
-    select: {
-      id: true,
-      title: true,
-      description: true,
-      questions: {
-        orderBy: { order: "asc" },
-        select: {
-          id: true,
-          title: true,
-          type: true,
-          options: {
-            orderBy: { order: "asc" },
-            select: { id: true, label: true },
-          },
-        },
-      },
-    },
-  });
+  const form = await getFormForEditor(id);
 
   if (!form) notFound();
 
