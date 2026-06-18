@@ -95,3 +95,17 @@ absent from the draft are deleted (their `Option`s cascade), existing ones are u
 questions carry a client-generated temporary `id` (`crypto.randomUUID()`); the server treats any `id` not already in the
 database as new, then returns the persisted rows so the client can reconcile temporary ids to real ones. Question
 `order` is derived from array position on every save.
+
+## Question Type Selection
+
+Each question's `type` is chosen in the editor from the supported `QuestionType`s (see the Question Types table above).
+The supported set and their human labels live in a single module (`src/lib/question-types.ts`) that imports
+`QuestionType` **type-only**, so it — and every client component that uses it — stays free of a runtime
+`@prisma/client` dependency in the browser bundle; the type values are string literals validated against the enum via
+`satisfies`.
+
+Only choice types (`SINGLE_CHOICE`, `MULTIPLE_CHOICE`) carry options. Validation requires at least two options for a
+choice question; switching a question away from a choice type drops its options on the next save. `saveFormQuestions`
+extends the draft-diff to options: within the same transaction, each kept question's options are diffed (update
+existing, create new, delete removed) using the same temporary-id reconciliation as questions, with option `order`
+derived from array position.

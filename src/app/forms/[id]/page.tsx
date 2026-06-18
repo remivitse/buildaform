@@ -20,7 +20,15 @@ export default async function FormEditPage({ params }: Props) {
       description: true,
       questions: {
         orderBy: { order: "asc" },
-        select: { id: true, title: true },
+        select: {
+          id: true,
+          title: true,
+          type: true,
+          options: {
+            orderBy: { order: "asc" },
+            select: { id: true, label: true },
+          },
+        },
       },
     },
   });
