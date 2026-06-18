@@ -81,3 +81,17 @@ Choice-based questions (`SINGLE_CHOICE`, `MULTIPLE_CHOICE`) use a dedicated `Opt
 `Question`. Each option has its own `id`, `label`, and `order`, with cascade delete from `Question`. This allows
 answers to reference options by `id` rather than by label string — keeping historical responses stable if
 a label is later edited.
+
+## Form Editor Persistence
+
+The Form Editor uses an **explicit-save / draft-in-memory** model rather than auto-saving each change. The editor
+(`FormEditor`) holds the question list in client state; add/remove/edit operations only mutate that draft, and a single
+**Save** action persists the whole set. We chose this over per-change server actions to avoid partial/garbage writes
+(e.g. empty questions) and to keep client/DB reconciliation in one place — which also makes drag reordering cheap to add
+later.
+
+`saveFormQuestions` persists the draft in a single Prisma **transaction** that diffs against the database: questions
+absent from the draft are deleted (their `Option`s cascade), existing ones are updated, and new ones are created. New
+questions carry a client-generated temporary `id` (`crypto.randomUUID()`); the server treats any `id` not already in the
+database as new, then returns the persisted rows so the client can reconcile temporary ids to real ones. Question
+`order` is derived from array position on every save.
