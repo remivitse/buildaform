@@ -10,8 +10,8 @@ This document outlines the technical decisions made for the BuildAForm project.
 
 ## Backend & Data
 - **Language**: TypeScript (End-to-end).
-- **ORM**: Prisma.
-- **Database**: Supabase / PostgreSQL (Self-hosted setup).
+- **ORM**: Prisma 6 (pinned). We deliberately stay on the v6 line for a simpler setup and richer support.
+- **Database**: Supabase Cloud (managed PostgreSQL). We chose the hosted offering over a self-hosted instance for a simpler setup — no infrastructure to run locally. Prisma connects via two URLs: the Supavisor **pooled** connection (transaction mode, port 6543) as `DATABASE_URL` for the app runtime, and the **direct** connection (port 5432) as `DIRECT_URL` for migrations.
 - **Authentication**: Deferred. Initial implementation will use an "open admin" approach to prioritize core features. Supabase Auth will be integrated later.
 
 ## AI Integration
